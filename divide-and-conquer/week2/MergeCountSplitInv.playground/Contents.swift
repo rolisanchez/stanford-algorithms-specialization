@@ -42,3 +42,32 @@ let (sorted, invertions) = sortAndCountInv(input: input)
 
 print("sorted \(sorted)")
 print("invertions \(invertions)")
+
+
+if let filepath = Bundle.main.path(forResource: "integerArray", ofType: "txt") {
+    do {
+        if let contents = try? String(contentsOfFile: filepath) {
+            let numbersString = contents.components(separatedBy: "\n")
+            print("numbersString \(numbersString.count)")
+//            print("numbersString.first \(Int((numbersString.first?.trimmingCharacters(in: .whitespacesAndNewlines))!))")
+
+
+            let numbers: [Int] = numbersString.map { Int($0.trimmingCharacters(in: .whitespacesAndNewlines))! }
+//            print("numbers.first \(numbers.first)")
+            
+//            let (sortedChallenge, invertionsChallenge) = sortAndCountInv(input: numbers)
+            
+//            print("sortedChallenge \(sortedChallenge)")
+            // 1035744464 (Swift)
+            // 1176350207
+            // 2407905288
+//            print("invertionsChallenge \(invertionsChallenge)")
+        } else {
+            print("Could not get contents")
+        }
+//        print(contents)
+    }
+} else {
+    // example.txt not found!
+    print("Error loading String")
+}
