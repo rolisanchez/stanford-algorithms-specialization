@@ -128,7 +128,7 @@ func computeSCC(graph: Graph) {
 if let filepath = Bundle.main.path(forResource: "SCCSmall", ofType: "txt") {
     do {
         if let contents = try? String(contentsOfFile: filepath) {
-             let stringArray = contents.components(separatedBy: "\n")
+            let stringArray = contents.components(separatedBy: "\n")
             let graph = Graph()
             
             stringArray.map { line in
