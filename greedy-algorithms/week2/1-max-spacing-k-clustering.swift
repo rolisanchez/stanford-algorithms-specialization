@@ -1,13 +1,14 @@
 import Foundation
 
-struct Cluster {
-    var elements: Set<Int> // Contains elements from 1 to 500
-}
-
-struct Edge {
+struct Edge: Equatable {
+    let identifier: Int
     let source: Int
     let destination: Int
     let weight: Int
+
+    public static func ==(lhs: Edge, rhs: Edge) -> Bool {
+        return lhs.identifier == rhs.identifier
+    }
 }
 
 class UnionFind {
@@ -41,7 +42,6 @@ class UnionFind {
         }
     }
 }
-// var unionFind = [Int: Int]() // Ex: 1: 2 means that 1's parent is 2
 
 var edges = [Edge]()
 
@@ -49,70 +49,71 @@ let DESIRED_CLUSTERS = 4
 
 let filepath = "./clustering1.txt"
 
-var clusters = [Cluster]()
-
-// func findParent(element: Int) -> Int{
-//     let parent = unionFind[element]!
-
-//     if parent == element {
-//         return element
-//     } else {
-//         return findParent(element: parent)
-//     }
-// }
+let MAX_ELEMENTS = 500
+var clustersCount = MAX_ELEMENTS
 
 do {
+    let start = DispatchTime.now().uptimeNanoseconds
     if let contents = try? String(contentsOfFile: filepath) {
         var lines = contents.components(separatedBy: "\n")
         lines = Array(lines[1..<lines.count])
 
         let unionFind = UnionFind()
-        for i in 0...500 {
+        // 0 should never be accessed
+        unionFind.parents.append(Int.min)
+        unionFind.sizes.append(Int.min)
+
+        for i in 1...MAX_ELEMENTS {
             // Each one is their own parent
             unionFind.parents.append(i)
             unionFind.sizes.append(1)
-
         }
 
+        var id_counter = 0
+        // var edgesSet = Set<Int>()
         lines.forEach { line in 
             let edgesWeights = line.components(separatedBy: " ")
-            let edge = Edge(source: Int(edgesWeights[0])!, destination: Int(edgesWeights[1])!, weight: Int(edgesWeights[2])!)
+            let edge = Edge(identifier: id_counter, source: Int(edgesWeights[0])!, destination: Int(edgesWeights[1])!, weight: Int(edgesWeights[2])!)
             edges.append(edge)
+            id_counter += 1
         }
 
         print("Edges count: ", edges.count)
 
-        // Test Union Find
-        // unionFind.parents[1] = 4
-        // unionFind.parents[2] = 1
-        // unionFind.parents[3] = 1
-
-        // unionFind.sizes[4] = 4
-
-        // unionFind.parents[5] = 6
-
-        // unionFind.sizes[6] = 2
-
-        // print(unionFind.parents)
-        // print(unionFind.sizes)
-        
-        // unionFind.union(element1: 5, element2: 1)
-        
-        // print(unionFind.parents)
-        // print(unionFind.sizes)
-
         // Sort from smallest to largest
         edges.sort { $0.weight < $1.weight }
 
+        print("clustersCount: ", clustersCount)
         // While K > 4
-        // var count = 0
-        // for edge in edges {
-        //     print(edge.weight)
-        //     if count == 17 {
-        //         break
-        //     }
-        //     count += 1
-        // }
+        while clustersCount > DESIRED_CLUSTERS {
+            // Kruskal's Greedy to find Edge with min weight (Only explored unused edges)
+            for edge in edges {
+                // If source and destination vertex/node are in different clusters (use Union-Find Data Structure to see if parents are the same), 
+                // then merge their clusters
+                if unionFind.find(element: edge.source) != unionFind.find(element: edge.destination) {
+                    // Merge the clusters: elementToCluster should point to the same Cluster
+                    // Instead of clusters = [Cluster]() we can just keep a count starting at 500 and do -1 each time it's merged
+                    if clustersCount == DESIRED_CLUSTERS {
+                        print("Maximum spacing: ", edge.weight)
+                        break
+                    }
+                    clustersCount -= 1
+                    // Merge: Union on Union Find Data Structure
+                    unionFind.union(element1: edge.source, element2: edge.destination)
+                    if let index = edges.firstIndex(of: edge) {
+                        edges.remove(at: index)
+                        // usedEdges.append(edge)
+                    }
+                }
+            }
+        }
+
+        // After having only 4 clusters, check the unused Edges
+        print("clustersCount: ", clustersCount)
+        print("edges count: ", edges.count)
+
+        let end = DispatchTime.now().uptimeNanoseconds
+        print("Time elapsed: \((end-start)/1_000)μs")
     } else {
         fatalError("Could not open file")
     }
