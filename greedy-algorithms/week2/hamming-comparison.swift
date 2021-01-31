@@ -24,6 +24,14 @@ func getHammingDistance(w1: String, w2: String) -> Int {
 
 func getHammingDistanceXor(w1: Int, w2: Int) -> Int {
     return Array(String(w1 ^ w2, radix: 2)).reduce(0) { $0 + ($1 == "1" ? 1 : 0)}
+    // Early stopping below is slower because of the variable storing
+    // let strArr = Array(String(w1 ^ w2, radix: 2))
+    // let half1Dist = strArr[0..<strArr.count/2].reduce(0) { $0 + ($1 == "1" ? 1 : 0)}
+
+    // if half1Dist > 2 {
+    //     return half1Dist
+    // }
+    // return half1Dist + strArr[strArr.count/2..<strArr.count].reduce(0) { $0 + ($1 == "1" ? 1 : 0)}
 }
 let filepath = "./clustering_big.txt"
 
@@ -74,6 +82,30 @@ do {
         }
         end = DispatchTime.now().uptimeNanoseconds
         print("Time elapsed: \((end-start)/1_000)μs")
+
+        // Using Async
+        start = DispatchTime.now().uptimeNanoseconds
+        outerLoop: for (vertexNum1, code1) in lines.enumerated() {
+            DispatchQueue.main.async {
+                innerLoop: for (_, code2) in Array(lines[vertexNum1+1..<lines.count]).enumerated() {
+                    _ = getHammingDistance(w1: code1, w2: code2)
+                }
+            }
+        }
+        end = DispatchTime.now().uptimeNanoseconds
+        print("Time elapsed: \((end-start)/1_000)μs")
+
+        start = DispatchTime.now().uptimeNanoseconds
+        outerLoop: for (vertexNum1, code1) in intLines.enumerated() {
+            DispatchQueue.main.async {
+                innerLoop: for (_, code2) in Array(intLines[vertexNum1+1..<intLines.count]).enumerated() {
+                    _ = getHammingDistanceXor(w1: code1, w2: code2)
+                }
+            }
+        }
+        end = DispatchTime.now().uptimeNanoseconds
+        print("Time elapsed: \((end-start)/1_000)μs")
+        
     } else {
         fatalError("Could not open file")
     }

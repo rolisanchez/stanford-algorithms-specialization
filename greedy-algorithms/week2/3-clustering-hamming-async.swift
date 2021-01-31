@@ -1,25 +1,7 @@
 import Foundation
 
-func getHammingDistance(w1: String, w2: String) -> Int {
-    if w1.count != w2.count {
-        return -1
-    }
-
-    let arr1 = Array(w1)
-    let arr2 = Array(w2)
-
-    var counter = 0
-    counterLoop: for i in 0 ..< arr1.count {
-        if arr1[i] != arr2[i] { 
-            counter += 1
-            // Exit early. We conly care about LESS THAN 3
-            if counter == 3 {
-                break counterLoop
-            }
-        }
-    }
-
-    return counter
+func getHammingDistanceXor(w1: Int, w2: Int) -> Int {
+    return Array(String(w1 ^ w2, radix: 2)).reduce(0) { $0 + ($1 == "1" ? 1 : 0)}
 }
 
 class UnionFind {
@@ -81,7 +63,7 @@ do {
     if let contents = try? String(contentsOfFile: filepath) {
         var lines = contents.components(separatedBy: "\n")
         lines = Array(lines[1..<lines.count])
-
+        let intLines = lines.map{ Int($0, radix: 2)! }
 
         let unionFind = UnionFind()
 
@@ -91,28 +73,31 @@ do {
             unionFind.sizes.append(1)
         }
 
+        print("intLines.count: ", intLines.count)
         var id_counter = 0
         var loopCounter = 1
-        outerLoop: for (vertexNum1, code1) in lines.enumerated() {
-            innerLoop: for (vertexNum2, code2) in Array(lines[vertexNum1+1..<lines.count]).enumerated() {
-                if vertexNum1 == vertexNum2 {
-                    continue innerLoop
-                }
-                let distance = getHammingDistance(w1: code1, w2: code2)
+        outerLoop: for (vertexNum1, code1) in intLines.enumerated() {
+            let vertexNum2Start = vertexNum1 + 1
+            let intLinesCopy = Array(intLines[vertexNum2Start..<intLines.count])
+            DispatchQueue.concurrentPerform(iterations: intLinesCopy.count) { index in
+                // print("index: ", index)
+                let vertexNum2 = vertexNum2Start + index
+                let code2 = intLinesCopy[index]
+                let distance = getHammingDistanceXor(w1: code1, w2: code2)
                 if distance < 3 {
                     let edge = Edge(identifier: id_counter, source: vertexNum1, destination: vertexNum2, weight: distance)
                     edges.append(edge)
                     id_counter += 1
                 }
+            
             }
-            // break outerLoop
+            
             print("Finished outerloop \(loopCounter)/\(MAX_ELEMENTS)")
             loopCounter += 1
         }
 
-        print("Edges count: ", edges.count)
-        print("clustersCount: ", clustersCount)
-        // print("Edges: ", edges)
+        print("Edges count 1: ", edges.count)
+        print("clustersCount 1: ", clustersCount)
         // Sort from smallest to largest
         edges.sort { $0.weight < $1.weight }
 
